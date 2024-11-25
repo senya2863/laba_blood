@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy import stats
+from scipy.optimize import curve_fit
 
 # Чтение данных из файла 40mm.txt
 with open("40mm.txt", 'r') as file:
@@ -26,24 +26,30 @@ list160 = [float(line.strip()) for line in list160]
 mean_values = [np.mean(list40), np.mean(list80), np.mean(list120), np.mean(list160)]
 
 # Оси x - индексы списков
-x = [40, 80, 120, 160]
+x = np.array([40, 80, 120, 160])
+
+# Определяем модель функции для аппроксимации (линейная функция)
+def linear_model(x, a, b):
+    return a * x + b
+
+# Используем curve_fit для аппроксимации данных
+params, covariance = curve_fit(linear_model, x, mean_values)
+
+# Извлекаем параметры модели
+a, b = params
 
 # Строим график
 plt.plot(x, mean_values, 'bo', label='Измерения')
-
-# Апроксимируем данные линейной регрессией
-slope, intercept, r_value, p_value, std_err = stats.linregress(x, mean_values)
-plt.plot(x, slope * np.array(x) + intercept, 'r-', label=f'Калиюровка (y={slope:.2f}x + {intercept:.2f})')
+plt.plot(x, linear_model(x, a, b), 'r-', label=f'Калибровка P={1/a:.2f}N - 7.24')
 
 # Подписываем график
 plt.title("Калибровочный график зависимости показаний АЦП от давления")
-plt.xlabel("Давлениех (мм рт.ст.)")
+plt.xlabel("Давление (мм рт.ст.)")
 plt.ylabel("Отсчёты АЦП")
 plt.legend()
-plt.grid(True, which='major', linestyle='-', color='black', alpha=0.5)  # Основная и дополнительная сетка
+plt.grid(True, which='major', linestyle='-', color='black', alpha=0.5)  # Основная сетка
 plt.minorticks_on()  # Включаем дополнительные деления на осях
-plt.grid(True, which='minor', linestyle='--', color='gray', alpha=0.7)  # Дополнительная сетка (тонкая линия)
-
+plt.grid(True, which='minor', linestyle='--', color='gray', alpha=0.7)  # Дополнительная сетка
 
 # Показываем график
 plt.show()
